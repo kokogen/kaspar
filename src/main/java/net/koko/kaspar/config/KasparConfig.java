@@ -1,7 +1,9 @@
 package net.koko.kaspar.config;
 
-import net.koko.kaspar.model.KasparTopicPartitionOffset;
-import net.koko.kaspar.model.dto.KasparItem;
+import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
+import net.koko.kaspar.model.data.KasparItem;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -15,20 +17,25 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 import reactor.kafka.receiver.ReceiverOptions;
 import reactor.kafka.sender.SenderOptions;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
 public class KasparConfig {
+
     @Value("${redisHost}")
     private String redisHost;
 
     @Value("${redisPort}")
     private int redisPort;
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
 
     @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {
@@ -67,8 +74,17 @@ public class KasparConfig {
     }
 
     @Bean
-    public ReactiveKafkaProducerTemplate<String, KasparItem> reactiveKafkaProducerTemplate(KafkaProperties properties) {
-        Map<String, Object> props = properties.buildProducerProperties();
-        return new ReactiveKafkaProducerTemplate<>(SenderOptions.create(props));
+    public ReactiveKafkaProducerTemplate<String, KasparItem> reactiveKafkaProducerTemplate() {
+        //Map<String, Object> props = properties.buildProducerProperties();
+        Map<String, Object> producerProps = new HashMap<>();
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, new JsonSerializer<KasparItem>());
+
+        SenderOptions<String, KasparItem> senderOptions =
+                SenderOptions.<String, KasparItem>create(producerProps);
+        //return new ReactiveKafkaProducerTemplate<>(SenderOptions.create(props));
+        return new ReactiveKafkaProducerTemplate<>(senderOptions);
     }
+
 }

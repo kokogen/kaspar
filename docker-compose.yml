@@ -1,0 +1,79 @@
+version: "3.5"
+services:
+
+  zookeeper:
+    #network_mode: host
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    # network_mode: host
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+
+  kafdrop_local:
+    image: obsidiandynamics/kafdrop
+    restart: "no"
+    ports:
+      - "9003:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      JVM_OPTS: "-Xms49M -Xmx100M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    depends_on:
+      - "kafka"
+
+  redis:
+    image: redis
+    container_name: redis
+    hostname: redis
+    ports:
+      - "6400:6379"
+    expose:
+      - "6400"
+    volumes:
+      - /Users/koko/opt/flu/redis/etc/redis.conf:/usr/local/etc/redis/redis.conf
+      - /Users/koko/opt/flu/redis/log:/data/log
+      - /Users/koko/opt/flu/redis/db:/data/bases
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - kasparnet
+
+  kaspar:
+    image: kaspar
+    container_name: kaspar
+    hostname: kaspar
+    volumes:
+      - /Users/koko/opt/kaspar/kaspar-api/log:/var/log
+    environment:
+      LOG_PATH: /var/log
+      FILE_LOG_PATTERN: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%"
+      redisHost: redis
+      redisPort: 6379
+    ports:
+      - "8081:8081"
+    networks:
+      - kasparnet
+    depends_on:
+      - redis
+      - kafka
+
+networks:
+  kasparnet:
+    driver: bridge
+
+
+

@@ -1,13 +1,11 @@
 package net.koko.kaspar.service.kafka;
 
-import net.koko.kaspar.KasparApplication;
-import net.koko.kaspar.model.KasparTopicPartition;
-import net.koko.kaspar.model.KasparTopicPartitionOffset;
-import net.koko.kaspar.model.dto.KasparItem;
+import net.koko.kaspar.model.state.KasparTopicPartition;
+import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
+import net.koko.kaspar.model.data.KasparItem;
 import net.koko.kaspar.service.storage.DataStorage;
 import net.koko.kaspar.service.storage.StateStorage;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +30,7 @@ public class KasparConsumer implements CommandLineRunner {
         return consumer.receive()
                 .doOnNext(record -> {
                     KasparTopicPartitionOffset kasparTopicPartitionOffset = new KasparTopicPartitionOffset(new KasparTopicPartition(record.topic(), record.partition()), record.offset());
-                    storage.save(kasparTopicPartitionOffset, record.value());
+                    storage.save(kasparTopicPartitionOffset, record.key(), record.value());
                     stateStorage.saveTopicPartitionOffset(kasparTopicPartitionOffset).blockOptional();
                     record.receiverOffset().acknowledge();
                 })
@@ -42,7 +40,6 @@ public class KasparConsumer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
         process().subscribe();
     }
 }

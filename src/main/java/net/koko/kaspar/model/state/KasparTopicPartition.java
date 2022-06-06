@@ -1,4 +1,4 @@
-package net.koko.kaspar.model;
+package net.koko.kaspar.model.state;
 
 public record KasparTopicPartition(String topic, int partition) {
     public String getKey() {

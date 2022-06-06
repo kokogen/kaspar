@@ -1,10 +1,10 @@
 package net.koko.kaspar.service.storage;
 
-import net.koko.kaspar.model.KasparTopicPartition;
-import net.koko.kaspar.model.KasparTopicPartitionOffset;
+import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface StateStorage {
     Mono<Boolean> saveTopicPartitionOffset(KasparTopicPartitionOffset topicPartitionOffset);
-    Mono<KasparTopicPartitionOffset> readOffset(KasparTopicPartition topicPartition);
+    Flux<KasparTopicPartitionOffset> readOffset(String topic);
 }
