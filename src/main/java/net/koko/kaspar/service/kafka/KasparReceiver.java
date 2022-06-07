@@ -10,15 +10,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.kafka.receiver.KafkaReceiver;
 
 @Service
-public class KasparConsumer implements CommandLineRunner {
-    public static Logger logger = LoggerFactory.getLogger(KasparConsumer.class);
+@Profile("dev")
+public class KasparReceiver implements CommandLineRunner {
+    public static Logger logger = LoggerFactory.getLogger(KasparReceiver.class);
     @Autowired
-    ReactiveKafkaConsumerTemplate<String, KasparItem> consumer;
+    KafkaReceiver<String, KasparItem> receiver;
+
     @Autowired
     DataStorage storage;
 
@@ -27,12 +30,13 @@ public class KasparConsumer implements CommandLineRunner {
 
     Flux<KasparItem> process(){
 
-        return consumer.receive()
+        return receiver.receive()
                 .doOnNext(record -> {
                     KasparTopicPartitionOffset kasparTopicPartitionOffset = new KasparTopicPartitionOffset(new KasparTopicPartition(record.topic(), record.partition()), record.offset());
                     storage.save(kasparTopicPartitionOffset, record.key(), record.value());
                     stateStorage.saveTopicPartitionOffset(kasparTopicPartitionOffset).blockOptional();
-                    record.receiverOffset().acknowledge();
+                    //record.receiverOffset().acknowledge();
+                    record.receiverOffset().commit().block();
                 })
                 .map(ConsumerRecord::value)
                 .doOnError(e -> logger.error(e.getMessage()));

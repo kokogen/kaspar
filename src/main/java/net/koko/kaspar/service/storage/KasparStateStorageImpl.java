@@ -4,6 +4,7 @@ import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@Profile("dev")
 public class KasparStateStorageImpl implements StateStorage{
     public static Logger logger = LoggerFactory.getLogger(KasparStateStorageImpl.class);
 

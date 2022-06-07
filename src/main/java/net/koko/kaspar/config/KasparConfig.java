@@ -2,10 +2,11 @@ package net.koko.kaspar.config;
 
 import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
 import net.koko.kaspar.model.data.KasparItem;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -15,10 +16,12 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
-import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
+import reactor.kafka.receiver.ReceiverPartition;
+import reactor.kafka.sender.KafkaSender;
 import reactor.kafka.sender.SenderOptions;
 
 import java.time.Duration;
@@ -61,30 +64,39 @@ public class KasparConfig {
     }
 
     @Bean
-    public ReceiverOptions<String, KasparItem> kafkaOptions(@Value(value = "${topic}") String topic, KafkaProperties kafkaProperties) {
-        ReceiverOptions<String, KasparItem> basicOptions = ReceiverOptions.create(kafkaProperties.buildConsumerProperties());
-        basicOptions.commitInterval(Duration.ZERO);
-        basicOptions.commitBatchSize(0);
-        return basicOptions.subscription(Collections.singletonList(topic));
+    public ReceiverOptions<String, KasparItem> receiverOptions(@Value(value = "${topic}") String topic) {
+
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "kaspar-grp");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, new JsonDeserializer<KasparItem>());
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        ReceiverOptions<String, KasparItem> options =
+                ReceiverOptions.<String, KasparItem>create(props)
+                        .addAssignListener(partitions -> partitions.forEach(ReceiverPartition::seekToEnd))
+                        .subscription(Collections.singleton(topic));
+
+        options.commitInterval(Duration.ZERO);
+        options.commitBatchSize(0);
+        return options.subscription(Collections.singletonList(topic));
     }
 
     @Bean
-    public ReactiveKafkaConsumerTemplate<String, KasparItem> reactiveKafkaConsumerTemplate(ReceiverOptions<String, KasparItem> kafkaReceiverOptions) {
-        return new ReactiveKafkaConsumerTemplate<>(kafkaReceiverOptions);
+    public KafkaReceiver<String, KasparItem> kafkaReceiver(ReceiverOptions<String, KasparItem> receiverOptions) {
+        return KafkaReceiver.create(receiverOptions);
     }
 
     @Bean
-    public ReactiveKafkaProducerTemplate<String, KasparItem> reactiveKafkaProducerTemplate() {
-        //Map<String, Object> props = properties.buildProducerProperties();
+    public KafkaSender<String, KasparItem> kafkaSender() {
         Map<String, Object> producerProps = new HashMap<>();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, new JsonSerializer<KasparItem>());
 
-        SenderOptions<String, KasparItem> senderOptions =
-                SenderOptions.<String, KasparItem>create(producerProps);
-        //return new ReactiveKafkaProducerTemplate<>(SenderOptions.create(props));
-        return new ReactiveKafkaProducerTemplate<>(senderOptions);
-    }
+        SenderOptions<String, KasparItem> senderOptions = SenderOptions.<String, KasparItem>create(producerProps);
 
+        return KafkaSender.<String, KasparItem>create(senderOptions);
+    }
 }

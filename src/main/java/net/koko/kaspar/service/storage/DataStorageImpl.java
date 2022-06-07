@@ -4,9 +4,11 @@ import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
 import net.koko.kaspar.model.data.KasparItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("dev")
 public class DataStorageImpl implements DataStorage{
     public static Logger logger = LoggerFactory.getLogger(DataStorageImpl.class);
     @Override
