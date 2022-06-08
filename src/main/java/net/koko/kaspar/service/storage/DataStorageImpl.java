@@ -14,9 +14,9 @@ public class DataStorageImpl implements DataStorage{
     @Override
     public void save(KasparTopicPartitionOffset kasparTopicPartitionOffset, String key, KasparItem kasparItem) {
         logger.info(String.format("topic: %s, partition: %d, offset: %d, key: %s, item: %s",
-                kasparTopicPartitionOffset.getTopicPartition().topic(),
-                kasparTopicPartitionOffset.getTopicPartition().partition(),
-                kasparTopicPartitionOffset.offset(),
+                kasparTopicPartitionOffset.getTopicPartition().getTopic(),
+                kasparTopicPartitionOffset.getTopicPartition().getPartition(),
+                kasparTopicPartitionOffset.getOffset(),
                 key,
                 kasparItem.toString()));
     }

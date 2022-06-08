@@ -11,12 +11,4 @@ public class KasparTopicPartition {
     public String getKey() {
         return topic + "-" + partition;
     }
-
-    public String topic() {
-        return topic;
-    }
-
-    public int partition() {
-        return partition;
-    }
 }

@@ -8,12 +8,4 @@ import lombok.Data;
 public class KasparTopicPartitionOffset {
     KasparTopicPartition topicPartition;
     long offset;
-
-    public KasparTopicPartition getTopicPartition() {
-        return topicPartition;
-    }
-
-    public long offset() {
-        return offset;
-    }
 }
