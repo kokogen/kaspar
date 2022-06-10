@@ -6,5 +6,5 @@ import reactor.core.publisher.Mono;
 
 public interface StateStorage {
     Mono<Boolean> saveTopicPartitionOffset(KasparTopicPartitionOffset topicPartitionOffset);
-    Flux<KasparTopicPartitionOffset> readOffset(String topic);
+    Flux<KasparTopicPartitionOffset> readOffset(String topic) throws Exception;
 }

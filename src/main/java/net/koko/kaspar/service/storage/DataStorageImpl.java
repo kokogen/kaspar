@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("dev")
 public class DataStorageImpl implements DataStorage{
     public static Logger logger = LoggerFactory.getLogger(DataStorageImpl.class);
     @Override

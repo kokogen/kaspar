@@ -15,7 +15,6 @@ import reactor.kafka.sender.SenderRecord;
 import java.util.List;
 
 @Component
-@Profile("dev")
 public class KasparSender {
     public static Logger logger = LoggerFactory.getLogger(KasparSender.class);
 
@@ -26,12 +25,12 @@ public class KasparSender {
     KafkaSender<String, KasparItem> sender;
 
     public void send(List<KasparItem> items){
-       Flux<SenderRecord<String, KasparItem, String>> records =
+        Flux<SenderRecord<String, KasparItem, String>> records =
                Flux
                        .fromStream(items.stream())
                        .map(item ->SenderRecord.create(new ProducerRecord<>(topic, item.getKey(), item), ""));
 
-       sender.send(records)
+        sender.send(records)
                .doOnError(e -> logger.error(e.getMessage()))
                .subscribe();
     }
