@@ -1,14 +1,21 @@
 package net.koko.kaspar.model.state;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-@AllArgsConstructor
+import java.io.Serializable;
+
+
 @Data
-public class KasparTopicPartition {
+public class KasparTopicPartition implements Serializable {
     String topic;
     int partition;
-    public String getKey() {
-        return topic + "-" + partition;
+
+    public KasparTopicPartition(){}
+
+    public KasparTopicPartition(String topic, int partition) {
+        this.topic = topic;
+        this.partition = partition;
     }
 }

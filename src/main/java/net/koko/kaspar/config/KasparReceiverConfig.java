@@ -2,9 +2,12 @@ package net.koko.kaspar.config;
 
 import net.koko.kaspar.model.data.KasparItem;
 import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
+import net.koko.kaspar.service.kafka.KasparReceiver;
 import net.koko.kaspar.service.storage.StateStorage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +21,8 @@ import java.util.*;
 
 @Configuration
 public class KasparReceiverConfig {
+    public static Logger logger = LoggerFactory.getLogger(KasparReceiver.class);
+
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
@@ -27,7 +32,7 @@ public class KasparReceiverConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "kaspar-grp");
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        //props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         //props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
 
@@ -39,6 +44,7 @@ public class KasparReceiverConfig {
         props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
         props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "net.koko.kaspar.model.data.KasparItem");
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "net.koko.kaspar");
+
 
         return ReceiverOptions.<String, KasparItem>create(props)
                 .commitInterval(Duration.ZERO)

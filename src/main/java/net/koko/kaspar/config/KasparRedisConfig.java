@@ -37,6 +37,7 @@ public class KasparRedisConfig {
         RedisSerializationContext<String, KasparTopicPartitionOffset> serializationContext = RedisSerializationContext
                 .<String, KasparTopicPartitionOffset>newSerializationContext(new StringRedisSerializer())
                 .key(new StringRedisSerializer())
+
                 .value(RedisSerializationContext.SerializationPair.fromSerializer(jackson2JsonRedisSerializer))
                 .hashKey(new StringRedisSerializer())
                 .hashValue(RedisSerializationContext.SerializationPair.fromSerializer(jackson2JsonRedisSerializer))
