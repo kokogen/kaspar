@@ -32,4 +32,9 @@ public class KasparController {
     public Flux<KasparTopicPartitionOffset> readOffset(@PathVariable("topic") String topic) throws Exception{
         return stateStorage.readOffset(topic);
     }
+
+    @PostMapping("/state")
+    public void setPartitionOffset(@RequestBody KasparTopicPartitionOffset topicPartitionOffset){
+        stateStorage.saveTopicPartitionOffset(topicPartitionOffset);
+    }
 }

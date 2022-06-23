@@ -16,62 +16,47 @@ import reactor.core.publisher.Mono;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 
-import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Component
 public class KasparReceiver implements CommandLineRunner {
     public static Logger logger = LoggerFactory.getLogger(KasparReceiver.class);
     @Autowired
     DataStorage storage;
-
+    @Autowired
     StateStorage stateStorage;
-
+    @Autowired
     ReceiverOptions<String, KasparItem> receiverOptions;
-
     @Value(value = "${topic}")
     String topic;
 
-    @Autowired
-    public KasparReceiver(ReceiverOptions<String, KasparItem> receiverOptions, StateStorage _stateStorage) {
-        this.stateStorage = _stateStorage;
-        this.receiverOptions = receiverOptions;
-    }
-
-    @PostConstruct
-    void init() throws Exception {
-        stateStorage.readOffset(topic).collectList().subscribe(offsetList ->
-
-            this.receiverOptions.addAssignListener(partitions -> partitions.forEach(partition -> {
-
-                long offset = Objects.requireNonNull(offsetList).stream()
-                        .filter(a -> a.getTopicPartition().getPartition() == partition.topicPartition().partition())
-                        .map(KasparTopicPartitionOffset::getOffset).findFirst()
-                        .get();
-                partition.seek(offset);
-                logger.info("******* init(): " + topic + ":" + partition.position() + ":" + offset);
-            }))
-        );
-    }
-
     @Override
     public void run(String... args) throws Exception {
-/*
-        KafkaReceiver.create(receiverOptions).doOnConsumer(
-                c -> {
+        List<KasparTopicPartitionOffset> lstPartitions = stateStorage.readOffset(topic).collectList().block();
 
-                    c.committed(new HashSet<>(Objects.requireNonNull(receiverOptions.assignment())))
-                            .forEach((key, value) -> System.out.printf("$$$$$$$$$$$$ part: %s, offs: %d%n", key.partition(), value.offset()));
-                    return Mono.empty();
+        receiverOptions.addAssignListener(
+                receiverPartitions ->
+                        receiverPartitions.forEach(p -> {
+                            long offset = lstPartitions.stream()
+                                    .filter(k -> k.getTopicPartition().getTopic().equals(topic) && (k.getTopicPartition().getPartition() == p.topicPartition().partition()))
+                                    .findFirst()
+                                    .get()
+                                    .getOffset();
+                            p.seek(offset);
 
-                }
-        ).subscribe();
+                            logger.info(" %%%%%% {}, {}, {}", topic, p.topicPartition().partition(), offset);
+                        })
+        );
 
-*/
-        KafkaReceiver.create(receiverOptions)
-                .receive()
+        KafkaReceiver.create(receiverOptions).doOnConsumer(consumer -> {
+            lstPartitions.forEach(x -> {
+                TopicPartition tp = new TopicPartition(topic, x.getTopicPartition().getPartition());
+                consumer.seek(tp, x.getOffset());
+            });
+            return Mono.empty();
+        });
+
+        KafkaReceiver.create(receiverOptions).receive()
                 .doOnNext(record -> logger.info("blink> " + record.partition() + "::" +record.receiverOffset().offset()))
                 .doOnError(e -> logger.error(e.getMessage()))
                 .subscribe(record -> {
