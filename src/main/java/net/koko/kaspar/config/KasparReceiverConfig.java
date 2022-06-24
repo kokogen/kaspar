@@ -1,7 +1,6 @@
 package net.koko.kaspar.config;
 
 import net.koko.kaspar.model.data.KasparItem;
-import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
 import net.koko.kaspar.service.kafka.KasparReceiver;
 import net.koko.kaspar.service.storage.StateStorage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -13,7 +12,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
-import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 
 import java.time.Duration;

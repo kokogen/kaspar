@@ -44,14 +44,6 @@ public class KasparStateStorageImpl implements StateStorage{
                         .flatMapMany(Flux::fromIterable)
                         .cast(KasparTopicPartitionOffset.class)
         );
-/*
-        List<Object> keys = operations.opsForHash().keys(STATE_STORAGE_KEY).collectList().block();
-        return operations.opsForHash()
-                .multiGet(STATE_STORAGE_KEY, keys)
-                .flatMapMany(Flux::fromIterable)
-                .cast(KasparTopicPartitionOffset.class);
-*/
-        //return keys.flatMapMany(Flux::fromIterable).map(k -> operations.opsForHash().get(STATE_STORAGE_KEY, k).cast(KasparTopicPartitionOffset.class).block());
     }
 
 

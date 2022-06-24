@@ -5,14 +5,12 @@ import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
 import net.koko.kaspar.model.data.KasparItem;
 import net.koko.kaspar.service.storage.DataStorage;
 import net.koko.kaspar.service.storage.StateStorage;
-import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 
@@ -34,7 +32,7 @@ public class KasparReceiver implements CommandLineRunner {
     public void run(String... args) throws Exception {
         List<KasparTopicPartitionOffset> lstPartitions = stateStorage.readOffset(topic).collectList().block();
 
-        receiverOptions.addAssignListener(
+        receiverOptions = receiverOptions.addAssignListener(
                 receiverPartitions ->
                         receiverPartitions.forEach(p -> {
                             long offset = lstPartitions.stream()
@@ -43,11 +41,9 @@ public class KasparReceiver implements CommandLineRunner {
                                     .get()
                                     .getOffset();
                             p.seek(offset);
-
-                            logger.info(" %%%%%% {}, {}, {}", topic, p.topicPartition().partition(), offset);
                         })
         );
-
+/*
         KafkaReceiver.create(receiverOptions).doOnConsumer(consumer -> {
             lstPartitions.forEach(x -> {
                 TopicPartition tp = new TopicPartition(topic, x.getTopicPartition().getPartition());
@@ -55,9 +51,8 @@ public class KasparReceiver implements CommandLineRunner {
             });
             return Mono.empty();
         });
-
+*/
         KafkaReceiver.create(receiverOptions).receive()
-                .doOnNext(record -> logger.info("blink> " + record.partition() + "::" +record.receiverOffset().offset()))
                 .doOnError(e -> logger.error(e.getMessage()))
                 .subscribe(record -> {
                             KasparTopicPartitionOffset kasparTopicPartitionOffset = new KasparTopicPartitionOffset(new KasparTopicPartition(record.topic(), record.partition()), record.offset());
