@@ -40,7 +40,7 @@ public class KasparReceiver implements CommandLineRunner {
                                     .findFirst()
                                     .get()
                                     .getOffset();
-                            p.seek(offset);
+                            p.seek(offset + 1);
                         })
         );
 /*
