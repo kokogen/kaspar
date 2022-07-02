@@ -41,19 +41,17 @@ services:
     container_name: redis
     hostname: redis
     ports:
-      - "6400:6379"
+      - "6379:6379"
     expose:
-      - "6400"
+      - "6379"
     volumes:
-      - /Users/koko/opt/flu/redis/etc/redis.conf:/usr/local/etc/redis/redis.conf
-      - /Users/koko/opt/flu/redis/log:/data/log
-      - /Users/koko/opt/flu/redis/db:/data/bases
+      - /Users/koko/opt/kaspar/redis/etc/redis.conf:/usr/local/etc/redis/redis.conf
+      - /Users/koko/opt/kaspar/redis/log:/data/log
+      - /Users/koko/opt/kaspar/redis/db:/data/bases
     command: redis-server /usr/local/etc/redis/redis.conf
-    networks:
-      - kasparnet
 
   kaspar:
-    image: kaspar
+    image: kaspar-image
     container_name: kaspar
     hostname: kaspar
     volumes:
@@ -63,17 +61,14 @@ services:
       FILE_LOG_PATTERN: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%"
       redisHost: redis
       redisPort: 6379
+      "spring.kafka.bootstrap-servers": "kafka:9092"
+      topic: kaspar
     ports:
       - "8081:8081"
-    networks:
-      - kasparnet
     depends_on:
       - redis
       - kafka
 
-networks:
-  kasparnet:
-    driver: bridge
 
 
 

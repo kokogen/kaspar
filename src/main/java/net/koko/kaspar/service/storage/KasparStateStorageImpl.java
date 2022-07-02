@@ -39,11 +39,13 @@ public class KasparStateStorageImpl implements StateStorage{
 
         Mono<List<Object>> keys = operations.opsForHash().keys(STATE_STORAGE_KEY).collectList();
 
-        return keys.flatMapMany(keysMono ->
-                operations.opsForHash().multiGet(STATE_STORAGE_KEY, keysMono)
+        return keys
+                .flatMapMany(keysMono ->
+                    operations.opsForHash().multiGet(STATE_STORAGE_KEY, keysMono)
                         .flatMapMany(Flux::fromIterable)
                         .cast(KasparTopicPartitionOffset.class)
-        );
+                )
+                .onErrorResume(err -> Flux.empty());
     }
 
 

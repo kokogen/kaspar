@@ -5,28 +5,58 @@ import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
 import net.koko.kaspar.model.data.KasparItem;
 import net.koko.kaspar.service.storage.DataStorage;
 import net.koko.kaspar.service.storage.StateStorage;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.KafkaAdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.stereotype.Component;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 
-import java.util.List;
+import javax.annotation.PostConstruct;
+import java.util.*;
 
 @Component
 public class KasparReceiver implements CommandLineRunner {
     public static Logger logger = LoggerFactory.getLogger(KasparReceiver.class);
     @Autowired
     DataStorage storage;
+
     @Autowired
     StateStorage stateStorage;
+
     @Autowired
     ReceiverOptions<String, KasparItem> receiverOptions;
+
     @Value(value = "${topic}")
     String topic;
+
+    @Autowired
+    KafkaAdmin kafkaAdmin;
+
+    @Autowired
+    NewTopic newTopic;
+
+    @PostConstruct
+    void init(){
+
+        try {
+            kafkaAdmin.createOrModifyTopics(newTopic);
+            /*
+            final Set<String> listTopics = kafkaAdmin.listTopics().names().get();
+            NewTopic newTopic = new NewTopic(topic,2, (short)1);
+            if(!listTopics.contains(topic)) kafkaAdmin.createTopics(Set.of(newTopic));
+            */
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+
+    }
 
     @Override
     public void run(String... args) throws Exception {
@@ -35,12 +65,10 @@ public class KasparReceiver implements CommandLineRunner {
         receiverOptions = receiverOptions.addAssignListener(
                 receiverPartitions ->
                         receiverPartitions.forEach(p -> {
-                            long offset = lstPartitions.stream()
+                            lstPartitions.stream()
                                     .filter(k -> k.getTopicPartition().getTopic().equals(topic) && (k.getTopicPartition().getPartition() == p.topicPartition().partition()))
                                     .findFirst()
-                                    .get()
-                                    .getOffset();
-                            p.seek(offset + 1);
+                                    .ifPresentOrElse(x -> p.seek(x.getOffset() + 1), p::seekToBeginning);
                         })
         );
 /*
