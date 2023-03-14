@@ -1,12 +1,11 @@
 package net.koko.kaspar.service.kafka;
 
+import jakarta.annotation.PostConstruct;
 import net.koko.kaspar.model.state.KasparTopicPartition;
 import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
 import net.koko.kaspar.model.data.KasparItem;
 import net.koko.kaspar.service.storage.DataStorage;
 import net.koko.kaspar.service.storage.StateStorage;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Component;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 
 @Component
