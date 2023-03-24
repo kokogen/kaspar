@@ -2,7 +2,7 @@ package net.koko.kaspar.controller;
 
 import net.koko.kaspar.model.data.KasparItem;
 import net.koko.kaspar.model.state.KasparTopicPartitionOffset;
-import net.koko.kaspar.service.kafka.KasparProducer;
+import net.koko.kaspar.service.kafka.KasparSender;
 import net.koko.kaspar.service.storage.StateStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,19 +18,23 @@ public class KasparController {
     public static Logger logger = LoggerFactory.getLogger(KasparController.class);
 
     @Autowired
-    KasparProducer producer;
+    KasparSender sender;
 
     @Autowired
     StateStorage stateStorage;
 
-    @PostMapping("/messages/send")
+    @PostMapping
     public void send(@RequestBody List<KasparItem> items){
-        producer.send(items);
-
+        sender.send(items);
     }
 
     @GetMapping("/state/{topic}")
-    public Flux<KasparTopicPartitionOffset> readOffset(@PathVariable("topic") String topic){
+    public Flux<KasparTopicPartitionOffset> readOffset(@PathVariable("topic") String topic) throws Exception{
         return stateStorage.readOffset(topic);
+    }
+
+    @PostMapping("/state")
+    public void setPartitionOffset(@RequestBody KasparTopicPartitionOffset topicPartitionOffset){
+        stateStorage.saveTopicPartitionOffset(topicPartitionOffset);
     }
 }

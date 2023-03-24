@@ -1,12 +1,15 @@
 package net.koko.kaspar.model.state;
 
-public record KasparTopicPartitionOffset(KasparTopicPartition topicPartition, long offset) {
-    public KasparTopicPartition getTopicPartition() {
-        return topicPartition;
-    }
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    @Override
-    public long offset() {
-        return offset;
-    }
+import java.io.Serializable;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class KasparTopicPartitionOffset implements Serializable {
+    KasparTopicPartition topicPartition;
+    long offset;
 }

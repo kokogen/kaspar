@@ -1,17 +1,16 @@
 package net.koko.kaspar.model.state;
 
-public record KasparTopicPartition(String topic, int partition) {
-    public String getKey() {
-        return topic + "-" + partition;
-    }
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    @Override
-    public String topic() {
-        return topic;
-    }
+import java.io.Serializable;
 
-    @Override
-    public int partition() {
-        return partition;
-    }
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class KasparTopicPartition implements Serializable {
+    String topic;
+    int partition;
 }
